@@ -1,0 +1,14 @@
+{
+  "name": "seamstressjs-dev-integrations",
+  "version": "0.0.0",
+  "description": "Integration testing of various modules for SeamstressJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "test"
+  ],
+  "author": "",
+  "license": "GPL-3.0"
+}
