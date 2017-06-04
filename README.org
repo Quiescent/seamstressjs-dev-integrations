@@ -176,3 +176,8 @@ Again in Haskell:
 ** TODO [#A] Implement Property Tests
 There's a matrix of things to test with property based testing.  We
 need to implement the entire matrix and get the tests passing.
+
+** TODO [#B] Investigate Why The Tests Are Passing
+The tests should not be passing.  It's passing core a Data URI and
+core hasn't been setup to accept one (!?)
+
