@@ -4,7 +4,7 @@
   "description": "Integration testing of various modules for SeamstressJS",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node node_modules/madge/bin/cli.js --circular --extensions js src/ && nyc --reporter=html --reporter=text mocha test/**/*.js && jscs src && jscs test"
   },
   "keywords": [
     "test"
@@ -14,5 +14,14 @@
   "dependencies": {
     "seamstressjs-adapters": "^0.1.0-alpha.0",
     "seamstressjs-core": "^0.1.0-alpha.0"
+  },
+  "devDependencies": {
+    "chai": "4.0.1",
+    "jscs": "3.0.7",
+    "madge": "1.6.0",
+    "mocha": "3.4.2",
+    "mocha-testcheck": "1.0.0-rc.0",
+    "nyc": "11.0.2",
+    "testcheck": "1.0.0-rc.2"
   }
 }
