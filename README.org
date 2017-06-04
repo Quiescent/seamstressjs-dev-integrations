@@ -1,0 +1,178 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+OPTIONS: author:t broken-links:nil c:nil creator:nil
+#+OPTIONS: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+OPTIONS: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+OPTIONS: timestamp:t title:t toc:t todo:t |:t
+#+TITLE: README
+#+DATE: <2017-06-04 Sun>
+#+AUTHOR: Edward John Steere
+#+EMAIL: edward.steere@gmail.com
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 25.1.1 (Org mode 9.0.6)
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:auto
+#+OPTIONS: html-preamble:t html-scripts:t html-style:t
+#+OPTIONS: html5-fancy:nil tex:t
+#+HTML_DOCTYPE: xhtml-strict
+#+HTML_CONTAINER: div
+#+DESCRIPTION:
+#+KEYWORDS:
+#+HTML_LINK_HOME:
+#+HTML_LINK_UP:
+#+HTML_MATHJAX:
+#+HTML_HEAD:
+#+HTML_HEAD_EXTRA:
+#+SUBTITLE:
+#+INFOJS_OPT:
+#+CREATOR: <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.1.1 (<a href="http://orgmode.org">Org</a> mode 9.0.6)
+#+LATEX_HEADER:
+
+* Introduction
+This repository is for developers of SeamstressJS to be able to write
+tests which involve both the adapters library and the core library.
+
+* Design
+** Interface of Core
+#+BEGIN_SRC haskell
+  type Image = String
+  -- Where the string image defines a Data URI
+  type Target = {width :: Int,
+                 height :: Int}
+
+  resize :: Image -> Target -> Image
+#+END_SRC
+** Interface of Adaptors
+*** Input
+#+BEGIN_SRC haskell
+  type Image = String
+  -- Where the string image defines a Data URI
+
+  input :: Image -> (Error -> Image -> IO ()) -> IO ()
+#+END_SRC
+*** Output
+#+BEGIN_SRC haskell
+  type Image = String
+  -- Where the string image defines a Data URI
+  type Target = {format :: String}
+
+  output :: (JimpImage a) => Image -> Target -> (Error -> a -> IO ()) -> IO ()
+  -- Where JimpImage is a class of image types which Jimp supports
+#+END_SRC
+
+** Relationship Between Adapters and Core
+The idea is to have a contract between Adapters and Core which uses an
+external standard so that they don't depend on each other.  In doing
+so, the implementation of Core will be loosely coupled from the input
+image types.  A user of SeamstressJS will thus be given the liberty to
+decide whether to use adapters for it's convenient conversion methods
+or to submit an arbitrary image type which conforms to the external
+standard.
+
+#+BEGIN_SRC dot :file img/dependency-diagram.svg
+  digraph {
+    "SeamstressJS-dev-integraptions" -> "SeamstressJS-core"
+    "SeamstressJS-dev-integraptions" -> "SeamstressJS-adapters"
+    "SeamstressJS-core" -> "Jimp"
+    "SeamstressJS-adapters" -> "Jimp"
+  }
+#+END_SRC
+
+#+RESULTS:
+[[file:img/dependency-diagram.svg]]
+
+The usage of the Jimp library is an implementation detail which users
+need not worry about.  It simply allows us to convert a given image
+into a Data URI and vice versa.
+
+** SeamstressJS-Web
+Coming attraction!
+
+* Tests
+** Property Based Tests
+The reason that we have a focus on property based testing in this
+project is that we don't think that:
+ - it's not feasible to maintain unit tests for very large images
+   (more than rank 4, 4) because of the number of variations;
+ - property based tests can pick up unforseen scenarios;
+
+| Properties\Generators       | White Noise | Uniform Distribution |
+|-----------------------------+-------------+----------------------|
+| Average Image Energy        | ✗           | ✗                    |
+| Total Image Energy          | ✗           | ✗                    |
+| Image Dimension Consistency | ✗           | ✗                    |
+
+For convenience, here is a cross: ✗, and here is a tick: ✓
+
+*** Properties
+**** /Average Image Energy/
+When removing a low energy seam, the average energy of the image
+should increase.  Conversely, when growing the image from a low energy
+seam, the average energy of the image should decrease.
+
+**** /Total Image Energy/
+When removing a seam from the image the total energy should decrease
+and when adding a seam the total energy should increase.
+
+**** /Image Dimension Consistency/
+The number of pixels in each row should be the same as in every
+other row and the same applies to the columns in the image.
+
+*** Generators
+For each generator we define a percentile for high coverage and day to
+day fast checking.  This varies between generators due to the varying
+complexity of each generator.
+
+The convention for the type of a generator is a function from a seed
+type and a fractional number (the percentile coverage) to a structure
+of a next seed and an EnergyMap.
+
+We believe that Haskell is an excellent way of describing the types
+involved:
+#+BEGIN_SRC haskell
+  type EnergyMap = [[Float]]
+
+  type RandomSeed = Integer
+
+  type RandomEnergyMap = {energyMap :: EnergyMap,
+                          nextSeed :: RandomSeed}
+
+  generator :: (Fractional a, RandomGen b) => a -> b -> RandomEnergyMap
+#+END_SRC
+
+**** /White Noise/
+We literally don't know what the possible cases are and white noise
+tends to work well when modelling randomness in nature.  High coverage
+is set to 95th percentile and day to day fast checking is set to 68th
+percentile.
+
+*** Running
+The objective of the test running harness is to remember all known
+failing seeds and prevent them from becoming an issue in the future by
+always testing them.  We also want to run a test for each property for
+each test.
+
+Failing seeds are recorded on a per generator, property combination
+basis and saved as a json file in the root of the repository.
+
+We aim to automatically update this description with any new failing
+seeds when the tests are by the CI server.
+
+As before the convention for the type of a runner is a function from a
+list of properties, generators and a seed per combination to a
+structure containing the full report.
+
+Again in Haskell:
+#+BEGIN_SRC haskell
+  type TestResult = {success :: Bool,
+                     startingSeed :: RandomSeed}
+
+  runTest :: (Fractional a, RandomGen b) => (a -> b -> RandomEnergyMap) -> (RandomEnergyMap -> Bool) -> TestResult
+#+END_SRC
+
+
+* TODOs
+
+** TODO [#A] Implement Property Tests
+There's a matrix of things to test with property based testing.  We
+need to implement the entire matrix and get the tests passing.
