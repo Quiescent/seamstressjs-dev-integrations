@@ -10,5 +10,8 @@
     "test"
   ],
   "author": "",
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "seamstressjs-adapters": "^0.1.0-alpha.0"
+  }
 }
